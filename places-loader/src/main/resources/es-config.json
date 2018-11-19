@@ -1,0 +1,186 @@
+{
+  "settings": {
+    "analysis": {
+      "analyzer": {
+        "autocomplete_keyword":{
+          "type":"custom",
+          "tokenizer":"standard",
+          "filter":[ "lowercase", "asciifolding", "ngram" ]
+        },
+        "basic_analyzer": {
+          "tokenizer": "standard",
+          "filter":  [ "lowercase", "asciifolding" ]
+        },
+        "termanalyzer": {
+          "tokenizer": "standard",
+          "filter":  [ "lowercase", "asciifolding" ]
+        }
+      },
+      "filter":{
+        "ngram":{
+          "type":"edgeNGram",
+          "min_gram":1,
+          "max_gram":20,
+          "token_chars": [ "letter", "digit" ]
+        }
+      }
+    }
+  },
+  "mappings": {
+    "location": {
+      "properties": {
+        "admin1" : {
+          "properties" : {
+            "code": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "alternates": {
+              "properties" : {
+                "lang" : {
+                  "type" : "string"
+                },
+                "name" : {
+                  "type" : "string"
+                }
+              }
+            }
+          }
+        },
+        "admin2" : {
+          "properties" : {
+            "code": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "alternates": {
+              "properties" : {
+                "lang" : {
+                  "type" : "string"
+                },
+                "name" : {
+                  "type" : "string"
+                }
+              }
+            }
+          }
+        },
+        "admin3" : {
+          "properties" : {
+            "code": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "alternates": {
+              "properties" : {
+                "lang" : {
+                  "type" : "string"
+                },
+                "name" : {
+                  "type" : "string"
+                }
+              }
+            }
+          }
+        },
+        "admin4" : {
+          "properties" : {
+            "code": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "alternates": {
+              "properties" : {
+                "lang" : {
+                  "type" : "string"
+                },
+                "name" : {
+                  "type" : "string"
+                }
+              }
+            }
+          }
+        },
+        "country" : {
+          "properties" : {
+            "code": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "alternates": {
+              "properties" : {
+                "lang" : {
+                  "type" : "string"
+                },
+                "name" : {
+                  "type" : "string"
+                }
+              }
+            }
+          }
+        },
+        "feature_class": {
+          "type": "string"
+        },
+        "feature_code": {
+          "type": "string"
+        },
+        "geo": {
+          "type": "geo_point"
+        },
+        "geonameid": {
+          "type": "string"
+        },
+        "postal_code": {
+          "type": "string",
+          "fields": {
+            "edgengram": {
+              "type": "string",
+              "analyzer": "autocomplete_keyword",
+              "search_analyzer" : "basic_analyzer"
+            }
+          },
+          "analyzer" : "termanalyzer"
+        },
+        "name": {
+          "type": "string",
+          "fields": {
+            "edgengram": {
+              "type": "string",
+              "analyzer": "autocomplete_keyword",
+              "search_analyzer" : "basic_analyzer"
+            }
+          },
+          "analyzer" : "termanalyzer"
+        },
+        "population": {
+          "type": "long"
+        },
+        "timezone": {
+          "type": "string"
+        },
+        "alternates": {
+          "properties" : {
+            "lang" : {
+              "type" : "string"
+            },
+            "name" : {
+              "type" : "string",
+              "analyzer" : "termanalyzer"
+            }
+          }
+        }
+      }
+    }
+  }
+}
