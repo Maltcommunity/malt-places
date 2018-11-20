@@ -12,6 +12,7 @@ import net.lingala.zip4j.exception.ZipException;
 import org.apache.commons.lang3.StringUtils;
 import org.elasticsearch.action.bulk.BulkProcessor;
 import org.elasticsearch.action.search.MultiSearchRequestBuilder;
+import org.elasticsearch.action.search.MultiSearchResponse;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
@@ -33,6 +34,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 
@@ -56,7 +58,7 @@ public class Loader implements ApplicationRunner {
     FileManager fileManager;
 
     @Override
-    public void run(ApplicationArguments args) throws IOException, ZipException, InterruptedException {
+    public void run(ApplicationArguments args) throws IOException, ZipException, InterruptedException, ExecutionException {
         // check if files exists or download it
         String tempDir = System.getProperty("java.io.tmpdir");
         log.info("Working folder =  " + tempDir);
@@ -71,7 +73,7 @@ public class Loader implements ApplicationRunner {
 
     }
 
-    private void enrichDataWithNames() throws InterruptedException {
+    private void enrichDataWithNames() throws InterruptedException, ExecutionException {
         SearchResponse scrollResp = client.prepareSearch("geonames")
                 .addSort("_doc", SortOrder.ASC)
                 .setScroll(new TimeValue(60000))
@@ -79,10 +81,6 @@ public class Loader implements ApplicationRunner {
                 .setSize(100).get();
 
         long count = 0;
-        BlockingQueue<String> blockingQueue = new LinkedBlockingDeque<>(800);
-        for (int i = 0; i < 800 ; i ++) {
-            blockingQueue.offer("init");
-        }
 
         do {
             for (SearchHit hit : scrollResp.getHits().getHits()) {
@@ -107,16 +105,18 @@ public class Loader implements ApplicationRunner {
                                     .must(prefixQuery("feature_code", "pcl"));
 
                             SearchRequestBuilder countryQuery= client
-                                    .prepareSearch().setQuery(queryToFindCountry).setSize(1);
+                                    .prepareSearch("geonames").setQuery(queryToFindCountry).setSize(1);
                             SearchRequestBuilder admin1Country = client
-                                    .prepareSearch().setQuery(queryToFindAdmin1).setSize(1);
+                                    .prepareSearch("geonames").setQuery(queryToFindAdmin1).setSize(1);
 
-                            blockingQueue.take();
-                            blockingQueue.take();
-                            client.prepareMultiSearch()
+                            MultiSearchResponse items = client.prepareMultiSearch()
                                     .add(countryQuery)
                                     .add(admin1Country)
-                                    .execute(new ActionListenerAdminAreaRetrieveInformations((String) source.get("geonameid"), client, blockingQueue));
+                                    .execute().get();
+
+                            ActionListenerAdminAreaRetrieveInformations listener = new ActionListenerAdminAreaRetrieveInformations((String) source.get("geonameid"), client, null);
+                            listener.onResponse(items);
+
                             break;
                         case "ADM1":
                             country = (Map<String, String>) source.get("country");
@@ -126,11 +126,14 @@ public class Loader implements ApplicationRunner {
                                     .must(prefixQuery("feature_code", "pcl"));
 
                             countryQuery= client
-                                    .prepareSearch().setQuery(queryToFindCountry).setSize(1);
-                            blockingQueue.take();
-                            client.prepareMultiSearch()
+                                    .prepareSearch("geonames").setQuery(queryToFindCountry).setSize(1);
+                            items =  client.prepareMultiSearch()
                                     .add(countryQuery)
-                                    .execute(new ActionListenerAdminAreaRetrieveInformations((String) source.get("geonameid"), client, blockingQueue));
+                                    .execute().get();
+
+                            listener = new ActionListenerAdminAreaRetrieveInformations((String) source.get("geonameid"), client, null);
+                            listener.onResponse(items);
+
                             break;
                         default:
                             // do nothing
@@ -156,22 +159,21 @@ public class Loader implements ApplicationRunner {
                             .must(prefixQuery("feature_code", "pcl"));
 
                     SearchRequestBuilder countryQuery= client
-                            .prepareSearch().setQuery(queryToFindCountry).setSize(1);
+                            .prepareSearch("geonames").setQuery(queryToFindCountry).setSize(1);
                     SearchRequestBuilder admin1Query = client
-                            .prepareSearch().setQuery(queryToFindAdmin1).setSize(1);
+                            .prepareSearch("geonames").setQuery(queryToFindAdmin1).setSize(1);
                     SearchRequestBuilder admin2Query = client
-                            .prepareSearch().setQuery(queryToFindAdmin2).setSize(1);
-                    blockingQueue.take();
-                    blockingQueue.take();
+                            .prepareSearch("geonames").setQuery(queryToFindAdmin2).setSize(1);
                     MultiSearchRequestBuilder requestBuilder = client.prepareMultiSearch()
                             .add(countryQuery)
                             .add(admin1Query);
 
                     if (!StringUtils.isEmpty(admin2.get("code"))) {
-                        blockingQueue.take();
                         requestBuilder = requestBuilder.add(admin2Query);
                     }
-                    requestBuilder.execute(new ActionListenerAdminAreaRetrieveInformations((String) source.get("geonameid"), client, blockingQueue));
+                    MultiSearchResponse items = requestBuilder.execute().get();
+                    ActionListenerAdminAreaRetrieveInformations listener = new ActionListenerAdminAreaRetrieveInformations((String) source.get("geonameid"), client, null);
+                    listener.onResponse(items);
                 }
             }
             count++;
@@ -182,11 +184,6 @@ public class Loader implements ApplicationRunner {
 
             scrollResp = client.prepareSearchScroll(scrollResp.getScrollId()).setScroll(new TimeValue(60000)).execute().actionGet();
         } while(scrollResp.getHits().getHits().length != 0);
-
-        while(blockingQueue.size() != 800) {
-            Thread.sleep(100);
-        }
-
     }
 
     private void enrichDataWithPostCode() throws IOException, InterruptedException {

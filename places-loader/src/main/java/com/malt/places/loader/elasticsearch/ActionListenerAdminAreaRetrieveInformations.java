@@ -33,29 +33,30 @@ public class ActionListenerAdminAreaRetrieveInformations implements ActionListen
         try {
             MultiSearchResponse.Item[] responses = items.getResponses();
 
-            for (int i = 0; i < responses.length; i++) {
-                blockingQueue.offer("done");
-            }
+//                for (int i = 0; i < responses.length; i++) {
+//                    blockingQueue.offer("done");
+//                }
 
+            XContentBuilder doc = jsonBuilder().startObject();
             if (responses.length > 0){
                 MultiSearchResponse.Item countryResponse = responses[0];
                 SearchHit[] hits = countryResponse.getResponse().getHits().getHits();
-                Map<String, Object> source = hits[0].getSource();
-                String countryName = (String) source.get("name");
-                List<Map<String,String>> countryAlternateNames = (List<Map<String,String>>) source.get("alternates");
+                if (hits.length > 0) {
+                    Map<String, Object> source = hits[0].getSource();
+                    String countryName = (String) source.get("name");
+                    List<Map<String, String>> countryAlternateNames = (List<Map<String, String>>) source.get("alternates");
 
-                XContentBuilder doc = jsonBuilder()
-                        .startObject()
-                        .startObject("country")
-                        .field("name", countryName)
-                        .field("alternates", countryAlternateNames)
-                        .endObject();
+                    doc = doc.startObject("country")
+                            .field("name", countryName)
+                            .field("alternates", countryAlternateNames)
+                            .endObject();
+                }
 
                 if (responses.length > 1) {
                     MultiSearchResponse.Item admin1Response = responses[1];
                     hits = admin1Response.getResponse().getHits().getHits();
                     if (hits.length > 0) {
-                        source = hits[0].getSource();
+                        Map<String, Object>source = hits[0].getSource();
                         String admin1Name = (String) source.get("name");
                         List<Map<String, String>> admin1AlternateNames = (List<Map<String, String>>) source.get("alternates");
 
@@ -69,7 +70,7 @@ public class ActionListenerAdminAreaRetrieveInformations implements ActionListen
                         MultiSearchResponse.Item admin2Response = responses[2];
                         hits = admin2Response.getResponse().getHits().getHits();
                         if (hits.length > 0) {
-                            source = hits[0].getSource();
+                            Map<String, Object> source = hits[0].getSource();
                             String admin2Name = (String) source.get("name");
                             List<Map<String, String>> admin2AlternateNames = (List<Map<String, String>>) source.get("alternates");
 
@@ -92,7 +93,7 @@ public class ActionListenerAdminAreaRetrieveInformations implements ActionListen
 
     @Override
     public void onFailure(Throwable e) {
-        blockingQueue.offer("fail");
+//        blockingQueue.offer("fail");
         log.error("Error when retrieving admin area", e);
     }
 }
