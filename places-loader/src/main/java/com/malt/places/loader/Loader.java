@@ -81,6 +81,7 @@ public class Loader implements ApplicationRunner {
                 .setSize(100).get();
 
         long count = 0;
+        BulkProcessor bulkProcessor = BulkProcessorBuilder.build(client);
 
         do {
             for (SearchHit hit : scrollResp.getHits().getHits()) {
@@ -114,7 +115,7 @@ public class Loader implements ApplicationRunner {
                                     .add(admin1Country)
                                     .execute().get();
 
-                            ActionListenerAdminAreaRetrieveInformations listener = new ActionListenerAdminAreaRetrieveInformations((String) source.get("geonameid"), client, null);
+                            ActionListenerAdminAreaRetrieveInformations listener = new ActionListenerAdminAreaRetrieveInformations((String) source.get("geonameid"), client, bulkProcessor);
                             listener.onResponse(items);
 
                             break;
@@ -131,7 +132,7 @@ public class Loader implements ApplicationRunner {
                                     .add(countryQuery)
                                     .execute().get();
 
-                            listener = new ActionListenerAdminAreaRetrieveInformations((String) source.get("geonameid"), client, null);
+                            listener = new ActionListenerAdminAreaRetrieveInformations((String) source.get("geonameid"), client, bulkProcessor);
                             listener.onResponse(items);
 
                             break;
@@ -172,15 +173,16 @@ public class Loader implements ApplicationRunner {
                         requestBuilder = requestBuilder.add(admin2Query);
                     }
                     MultiSearchResponse items = requestBuilder.execute().get();
-                    ActionListenerAdminAreaRetrieveInformations listener = new ActionListenerAdminAreaRetrieveInformations((String) source.get("geonameid"), client, null);
+                    ActionListenerAdminAreaRetrieveInformations listener = new ActionListenerAdminAreaRetrieveInformations((String) source.get("geonameid"), client, bulkProcessor);
                     listener.onResponse(items);
                 }
-            }
-            count++;
+                count++;
 
-            if (count % 10000 == 0) {
-                log.info("Elements processed : " + count);
+                if (count % 10000 == 0) {
+                    log.info("Elements processed : " + count);
+                }
             }
+
 
             scrollResp = client.prepareSearchScroll(scrollResp.getScrollId()).setScroll(new TimeValue(60000)).execute().actionGet();
         } while(scrollResp.getHits().getHits().length != 0);

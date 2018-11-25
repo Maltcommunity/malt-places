@@ -16,7 +16,7 @@ public class ElasticSearchConfig {
     @Value(value = "${es.cluster.name:hopwork}")
     private String clusterName;
 
-    @Value(value = "${es.port:9300}")
+    @Value(value = "${es.port:9301}")
     private int esPort;
 
     @Value(value = "${es.nodes:localhost}")

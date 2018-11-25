@@ -8,17 +8,11 @@ import java.util.List;
 @Data
 public class Suggestion {
 
-
-    @JsonProperty("admin1_code")
-    private String administrativeAreaLevel1Code;
-    @JsonProperty("admin2_code")
-    private String administrativeAreaLevel2Code;
-    @JsonProperty("admin3_code")
-    private String administrativeAreaLevel3Code;
-    @JsonProperty("admin4_code")
-    private String administrativeAreaLevel4Code;
-    @JsonProperty("country_code")
-    private String countryCode;
+    private AdminAreaDescription admin1;
+    private AdminAreaDescription admin2;
+    private AdminAreaDescription admin3;
+    private AdminAreaDescription admin4;
+    private AdminAreaDescription country;
     private String name;
     private String timezone;
     private Geopoint geo;

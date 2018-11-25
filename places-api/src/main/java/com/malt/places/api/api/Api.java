@@ -32,12 +32,16 @@ public class Api {
     private SuggestResponse toSuggestResponse(Suggestion suggestion) {
         log.info("" + suggestion);
         SuggestResponse suggestResponse = new SuggestResponse();
-        suggestResponse.setAdministrativeAreaLevel1Code(suggestion.getAdministrativeAreaLevel1Code());
-        suggestResponse.setAdministrativeAreaLevel2Code(suggestion.getAdministrativeAreaLevel2Code());
-        suggestResponse.setAdministrativeAreaLevel3Code(suggestion.getAdministrativeAreaLevel3Code());
-        suggestResponse.setAdministrativeAreaLevel4Code(suggestion.getAdministrativeAreaLevel4Code());
-        suggestResponse.setCountryCode(suggestion.getCountryCode());
-        suggestResponse.setCountry(new Locale("", suggestion.getCountryCode()).getDisplayName());
+        suggestResponse.setAdministrativeAreaLevel1Code(suggestion.getAdmin1().getCode());
+        suggestResponse.setAdministrativeAreaLevel1(suggestion.getAdmin1().getName());
+        suggestResponse.setAdministrativeAreaLevel2Code(suggestion.getAdmin2().getCode());
+        suggestResponse.setAdministrativeAreaLevel2(suggestion.getAdmin2().getName());
+        suggestResponse.setAdministrativeAreaLevel3Code(suggestion.getAdmin3().getCode());
+        suggestResponse.setAdministrativeAreaLevel3(suggestion.getAdmin3().getName());
+        suggestResponse.setAdministrativeAreaLevel4Code(suggestion.getAdmin4().getCode());
+        suggestResponse.setAdministrativeAreaLevel4(suggestion.getAdmin4().getName());
+        suggestResponse.setCountryCode(suggestion.getCountry().getCode());
+        suggestResponse.setCountry(suggestion.getCountry().getName());
         suggestResponse.setGeonameid(suggestion.getGeonameid());
         suggestResponse.setGeopoint(suggestion.getGeo());
         suggestResponse.setTimezone(suggestion.getTimezone());

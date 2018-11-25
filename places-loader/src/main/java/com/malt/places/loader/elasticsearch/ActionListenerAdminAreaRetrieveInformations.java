@@ -2,6 +2,7 @@ package com.malt.places.loader.elasticsearch;
 
 import lombok.extern.slf4j.Slf4j;
 import org.elasticsearch.action.ActionListener;
+import org.elasticsearch.action.bulk.BulkProcessor;
 import org.elasticsearch.action.search.MultiSearchResponse;
 import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.client.Client;
@@ -11,7 +12,6 @@ import org.elasticsearch.search.SearchHit;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.BlockingQueue;
 
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 
@@ -20,22 +20,18 @@ public class ActionListenerAdminAreaRetrieveInformations implements ActionListen
 
     private String geonameid;
     private Client client;
-    private BlockingQueue<String> blockingQueue;
+    private BulkProcessor bulkProcessor;
 
-    public ActionListenerAdminAreaRetrieveInformations(String geonameid, Client client, BlockingQueue<String> blockingQueue) {
+    public ActionListenerAdminAreaRetrieveInformations(String geonameid, Client client, BulkProcessor bulkProcessor) {
         this.geonameid = geonameid;
         this.client = client;
-        this.blockingQueue = blockingQueue;
+        this.bulkProcessor = bulkProcessor;
     }
 
     @Override
     public void onResponse(MultiSearchResponse items) {
         try {
             MultiSearchResponse.Item[] responses = items.getResponses();
-
-//                for (int i = 0; i < responses.length; i++) {
-//                    blockingQueue.offer("done");
-//                }
 
             XContentBuilder doc = jsonBuilder().startObject();
             if (responses.length > 0){
@@ -83,7 +79,8 @@ public class ActionListenerAdminAreaRetrieveInformations implements ActionListen
                 }
                 doc = doc.endObject();
                 UpdateRequest update = new UpdateRequest("geonames", "location", geonameid).doc(doc);
-                client.update(update).actionGet();
+                bulkProcessor.add(update);
+
             }
 
         } catch (IOException e) {
@@ -93,7 +90,6 @@ public class ActionListenerAdminAreaRetrieveInformations implements ActionListen
 
     @Override
     public void onFailure(Throwable e) {
-//        blockingQueue.offer("fail");
         log.error("Error when retrieving admin area", e);
     }
 }
